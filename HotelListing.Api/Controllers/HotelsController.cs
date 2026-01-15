@@ -8,7 +8,7 @@ namespace HotelListing.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class HotelsController : ControllerBase
+    public class HotelsController : ControllerBase 
     {
         private static List<Hotel> hotels = new List<Hotel>
         {
@@ -18,7 +18,7 @@ namespace HotelListing.Api.Controllers
 
         // GET: api/<HotelsController>
         [HttpGet]
-        public ActionResult<IEnumerable<Hotel>> Get()
+        public ActionResult<IEnumerable<Hotel>> Get() 
         {
             return Ok(hotels);
         }
