@@ -21,7 +21,9 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Country>> GetCountry(int id)
     {
-        var country = await context.Countries.FindAsync(id);
+        var country = await context.Countries
+            .Include(h => h.Hotels)
+            .FirstOrDefaultAsync(q => q.CountryId == id);
 
         if (country == null)
             return NotFound();
@@ -54,7 +56,7 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (! await CountryExistsAsync(id))
+            if (!await CountryExistsAsync(id))
             {
                 return NotFound();
             }
