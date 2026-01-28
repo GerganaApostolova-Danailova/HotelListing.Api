@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelListing.Api.Data;
+using HotelListing.Api.DTOs.Country;
+using HotelListing.Api.DTOs.Hotel;
 
 namespace HotelListing.Api.Controllers;
 
@@ -11,48 +13,93 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
 
     // GET: api/Countries
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Country>>> GetCountries()
+    public async Task<ActionResult<IEnumerable<GetCountriesDto>>> GetCountries()
     {
-        var contries = await context.Countries.ToListAsync();
-        return contries;
+        var countries = await context.Countries
+            .Select(c => new GetCountriesDto(
+                c.CountryId,
+                c.Name,
+                c.ShortName
+            ))
+            .ToListAsync();
+
+        return Ok(countries);
     }
+
 
     // GET: api/Countries/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Country>> GetCountry(int id)
+    public async Task<ActionResult<GetCountryDto>> GetCountry(int id)
     {
         var country = await context.Countries
-            .Include(h => h.Hotels)
-            .FirstOrDefaultAsync(q => q.CountryId == id);
+            .Where(q => q.CountryId == id)
+            .Select(c => new GetCountryDto(
+                c.CountryId,
+                c.Name,
+                c.ShortName,
+                c.Hotels.Select(h => new GetHotelSlimDto(
+                    h.Id,
+                    h.Name,
+                    h.Address,
+                    h.Rating
+                )).ToList()
+            ))
+            .FirstOrDefaultAsync();
 
         if (country == null)
+        {
             return NotFound();
+        }
 
-        return country;
+        return Ok(country);
     }
 
     // POST: api/Countries
     [HttpPost]
-    public async Task<ActionResult<Country>> PostCountry(Country country)
+    public async Task<ActionResult<GetCountryDto>> PostCountry(CreateCountryDto createDto)
     {
+        var country = new Country
+        {
+            Name = createDto.Name,
+            ShortName = createDto.ShortName
+        };
+
         context.Countries.Add(country);
         await context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetCountry), new { id = country.CountryId }, country);
+        var resultDto = new GetCountryDto(
+            country.CountryId,
+            country.Name,
+            country.ShortName,
+            []
+        );
+
+        return CreatedAtAction(nameof(GetCountry), new { id = country.CountryId }, resultDto);
     }
 
     // PUT: api/Countries/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutCountry(int id, Country country)
+    public async Task<IActionResult> PutCountry(int id, UpdateCountryDto updateDto)
     {
-        if (id != country.CountryId)
+        if (id != updateDto.Id)
+        {
             return BadRequest();
+        }
+
+        var country = await context.Countries.FindAsync(id);
+        if (country == null)
+        {
+            return NotFound();
+        }
+
+        country.Name = updateDto.Name;
+        country.ShortName = updateDto.ShortName;
 
         context.Entry(country).State = EntityState.Modified;
+
         try
         {
             await context.SaveChangesAsync();
-
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -75,15 +122,17 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
     public async Task<IActionResult> DeleteCountry(int id)
     {
         var country = await context.Countries.FindAsync(id);
-
         if (country == null)
+        {
             return NotFound();
+        }
 
         context.Countries.Remove(country);
         await context.SaveChangesAsync();
 
         return NoContent();
     }
+
     private async Task<bool> CountryExistsAsync(int id)
     {
         return await context.Countries.AnyAsync(e => e.CountryId == id);
