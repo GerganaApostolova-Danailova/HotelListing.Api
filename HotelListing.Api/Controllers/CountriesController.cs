@@ -2,26 +2,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HotelListing.Api.Data;
 using HotelListing.Api.DTOs.Country;
-using HotelListing.Api.DTOs.Hotel;
+using HotelListing.Api.Contacts;
 
 namespace HotelListing.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CountriesController(HotelListingDbContext context) : ControllerBase
+public class CountriesController(IContriesService countriesService) : ControllerBase
 {
 
     // GET: api/Countries
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GetCountriesDto>>> GetCountries()
     {
-        var countries = await context.Countries
-            .Select(c => new GetCountriesDto(
-                c.CountryId,
-                c.Name,
-                c.ShortName
-            ))
-            .ToListAsync();
+        var countries = await countriesService.GetCountriesAsync();
 
         return Ok(countries);
     }
@@ -31,20 +25,7 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<GetCountryDto>> GetCountry(int id)
     {
-        var country = await context.Countries
-            .Where(q => q.CountryId == id)
-            .Select(c => new GetCountryDto(
-                c.CountryId,
-                c.Name,
-                c.ShortName,
-                c.Hotels.Select(h => new GetHotelSlimDto(
-                    h.Id,
-                    h.Name,
-                    h.Address,
-                    h.Rating
-                )).ToList()
-            ))
-            .FirstOrDefaultAsync();
+        var country = await countriesService.GetCountryAsync(id);
 
         if (country == null)
         {
@@ -58,23 +39,9 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GetCountryDto>> PostCountry(CreateCountryDto createDto)
     {
-        var country = new Country
-        {
-            Name = createDto.Name,
-            ShortName = createDto.ShortName
-        };
+        var resultDto = await countriesService.CreateCountryAsync(createDto);
 
-        context.Countries.Add(country);
-        await context.SaveChangesAsync();
-
-        var resultDto = new GetCountryDto(
-            country.CountryId,
-            country.Name,
-            country.ShortName,
-            []
-        );
-
-        return CreatedAtAction(nameof(GetCountry), new { id = country.CountryId }, resultDto);
+        return CreatedAtAction(nameof(GetCountry), new { id = resultDto.Id }, resultDto);
     }
 
     // PUT: api/Countries/5
@@ -86,33 +53,7 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
             return BadRequest();
         }
 
-        var country = await context.Countries.FindAsync(id);
-        if (country == null)
-        {
-            return NotFound();
-        }
-
-        country.Name = updateDto.Name;
-        country.ShortName = updateDto.ShortName;
-
-        context.Entry(country).State = EntityState.Modified;
-
-        try
-        {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await CountryExistsAsync(id))
-            {
-                return NotFound();
-            }
-            else
-            {
-                throw;
-            }
-        }
-
+        await countriesService.UpdateCountryAsync(id, updateDto);
         return NoContent();
     }
 
@@ -121,20 +62,9 @@ public class CountriesController(HotelListingDbContext context) : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCountry(int id)
     {
-        var country = await context.Countries.FindAsync(id);
-        if (country == null)
-        {
-            return NotFound();
-        }
-
-        context.Countries.Remove(country);
-        await context.SaveChangesAsync();
-
+        await countriesService.DeleteCountryAsync(id);
         return NoContent();
     }
-
-    private async Task<bool> CountryExistsAsync(int id)
-    {
-        return await context.Countries.AnyAsync(e => e.CountryId == id);
-    }
 }
+
+    

@@ -1,11 +1,17 @@
 using HotelListing.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using HotelListing.Api.Contacts;
+using HotelListing.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the IoC container.
 var connectionString = builder.Configuration.GetConnectionString("HotelListingDbConnectionString");
 builder.Services.AddDbContext<HotelListingDbContext>(options => options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<IContriesService, ContriesService>();
+builder.Services.AddScoped<IHotelsService, HotelsService>();
+
 
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
