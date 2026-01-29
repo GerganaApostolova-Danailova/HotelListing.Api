@@ -2,6 +2,7 @@ using HotelListing.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using HotelListing.Api.Contacts;
 using HotelListing.Api.Services;
+using HotelListing.Api.MappingProfiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +13,10 @@ builder.Services.AddDbContext<HotelListingDbContext>(options => options.UseSqlSe
 builder.Services.AddScoped<IContriesService, ContriesService>();
 builder.Services.AddScoped<IHotelsService, HotelsService>();
 
-
+builder.Services.AddAutoMapper(cfg => {
+    cfg.AddProfile<HotelMappingProfile>();
+    cfg.AddProfile<CountryMappingProfile>();
+});
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
     {
