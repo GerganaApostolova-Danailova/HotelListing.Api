@@ -88,13 +88,6 @@ public class CountriesService(HotelListingDbContext context) : ICountriesService
                 return Result.NotFound(new Error("NotFound", $"Country '{id}' was not found"));
             }
 
-            var duplicateName = await CountryExistsAsync(updateDto.Name);
-
-            if (duplicateName)
-            {
-                return Result.Failure(new Error("Conflict", $"Country with name '{updateDto.Name}' already exist"));
-            }
-
             country.Name = updateDto.Name;
             country.ShortName = updateDto.ShortName;
             context.Countries.Update(country);

@@ -78,12 +78,6 @@ public class HotelsService(HotelListingDbContext context,
             return Result.NotFound(new Error(ErrorCodes.NotFound, $"Hotel '{id}' was not found."));
         }
 
-        var countryExists = await countriesService.CountryExistsAsync(updateDto.CountryId);
-        if (!countryExists)
-        {
-            return Result.NotFound(new Error(ErrorCodes.NotFound, $"Country '{updateDto.CountryId}' was not found."));
-        }
-
         mapper.Map(updateDto, hotel);
 
         context.Hotels.Update(hotel);

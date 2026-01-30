@@ -4,12 +4,16 @@ using HotelListing.Api.Contracts;
 using HotelListing.Api.Services;
 using HotelListing.Api.MappingProfiles;
 using HotelListing.Api.Contacts;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the IoC container.
 var connectionString = builder.Configuration.GetConnectionString("HotelListingDbConnectionString");
 builder.Services.AddDbContext<HotelListingDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddIdentityCore<IdentityUser>(options =>{ })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<HotelListingDbContext>();
 
 builder.Services.AddScoped<ICountriesService, CountriesService>();
 builder.Services.AddScoped<IHotelsService, HotelsService>();

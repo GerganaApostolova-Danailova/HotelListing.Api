@@ -62,11 +62,11 @@ PUT {{HotelListing.Api_HostAddress}}/api/hotels/{{id}}
 Content-Type: application/json
 
 {
-  "Id": 6,
+  "Id": ,
   "Name": "Ocean Coral",
   "Address": "Trelawny, Jamaica",
   "Rating": 4.5,
-  "CountryId": 2
+  "CountryId": 1
 }
 
 
