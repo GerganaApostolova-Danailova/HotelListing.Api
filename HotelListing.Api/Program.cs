@@ -1,8 +1,9 @@
 using HotelListing.Api.Data;
 using Microsoft.EntityFrameworkCore;
-using HotelListing.Api.Contacts;
+using HotelListing.Api.Contracts;
 using HotelListing.Api.Services;
 using HotelListing.Api.MappingProfiles;
+using HotelListing.Api.Contacts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("HotelListingDbConnectionString");
 builder.Services.AddDbContext<HotelListingDbContext>(options => options.UseSqlServer(connectionString));
 
-builder.Services.AddScoped<IContriesService, ContriesService>();
+builder.Services.AddScoped<ICountriesService, CountriesService>();
 builder.Services.AddScoped<IHotelsService, HotelsService>();
 
 builder.Services.AddAutoMapper(cfg => {
