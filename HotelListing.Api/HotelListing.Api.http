@@ -1,4 +1,5 @@
 @HotelListing.Api_HostAddress = https://localhost:7215
+@json = application/json
 
 @id=1
 GET {{HotelListing.Api_HostAddress}}/api/countries
@@ -6,7 +7,7 @@ GET {{HotelListing.Api_HostAddress}}/api/countries
 ###
 
 POST {{HotelListing.Api_HostAddress}}/api/countries
-Content-Type: application/json
+Content-Type: {{json}}
 
 {
   "name": "Test Country",
@@ -24,7 +25,7 @@ GET {{HotelListing.Api_HostAddress}}/api/countries/{{id}}
 ###
 
 PUT {{HotelListing.Api_HostAddress}}/api/countries/{{id}}
-Content-Type: application/json
+Content-Type: {{json}}
 
 {
   "countryId": 2,
@@ -38,7 +39,7 @@ GET {{HotelListing.Api_HostAddress}}/api/hotels
 ###
 
 POST {{HotelListing.Api_HostAddress}}/api/hotels
-Content-Type: application/json
+Content-Type: {{json}}
 
 {
   "Id":4,
@@ -59,7 +60,7 @@ GET {{HotelListing.Api_HostAddress}}/api/hotels/{{id}}
 ###
 
 PUT {{HotelListing.Api_HostAddress}}/api/hotels/{{id}}
-Content-Type: application/json
+Content-Type: {{json}}
 
 {
   "Id": ,
@@ -69,5 +70,40 @@ Content-Type: application/json
   "CountryId": 1
 }
 
+
+###
+
+POST {{HotelListing.Api_HostAddress}}/api/auth/register
+Content-Type: {{json}}
+
+{
+  "email": "user1@localhost.com",
+  "password": "Password1!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+###
+POST {{HotelListing.Api_HostAddress}}/api/auth/login
+Authorization: Bearer {{$bearerToken}}
+Content-Type: application/json
+
+{
+  "email": "user2@localhost.com",
+  "password": "Password1!"
+}
+
+###
+
+POST {{HotelListing.Api_HostAddress}}/api/auth/register
+Authorization: Bearer {{$bearerToken}}
+Content-Type: application/json
+
+{
+  "email": "user2@localhost.com",
+  "password": "Password1!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
 
 ###

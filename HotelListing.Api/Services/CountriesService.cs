@@ -27,7 +27,7 @@ public class CountriesService(HotelListingDbContext context) : ICountriesService
                 c.CountryId,
                 c.Name,
                 c.ShortName,
-                c.Hotels.Select(h => new GetHotelSlimDto(
+                c.Hotels!.Select(h => new GetHotelSlimDto(
                     h.Id,
                     h.Name,
                     h.Address,
