@@ -1,4 +1,5 @@
-﻿using HotelListing.Api.Data;
+﻿using HotelListing.Api.Contracts;
+using HotelListing.Api.Data;
 using HotelListing.Api.DTOs.Auth;
 using HotelListing.Api.Services;
 using Microsoft.AspNetCore.Authentication;
@@ -14,7 +15,7 @@ namespace HotelListing.Api.Handlers
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        UserManager<ApplicationUser> userManager
+        IUsersService usersService
         ) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()

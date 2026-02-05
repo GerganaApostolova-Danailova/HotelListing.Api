@@ -20,14 +20,12 @@ builder.Services.AddDbContext<HotelListingDbContext>(options => options.UseSqlSe
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
     .AddEntityFrameworkStores<HotelListingDbContext>();
     //.AddDefaultTokenProviders();
-    builder.Services.AddAuthentication(options =>
-    {
+    builder.Services.AddAuthentication(options => {
         options.DefaultAuthenticateScheme = AuthenticationDefaults.BasicScheme;
         options.DefaultChallengeScheme = AuthenticationDefaults.BasicScheme;
-    }).AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(AuthenticationDefaults.BasicScheme, _ =>
-    {
+    })
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>(AuthenticationDefaults.BasicScheme, _ => { });
 
-    });
 builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ICountriesService, CountriesService>();

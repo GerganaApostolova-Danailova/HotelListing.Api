@@ -3,7 +3,7 @@
 
 @id=1
 GET {{HotelListing.Api_HostAddress}}/api/countries
-
+Authorization: Basic dXNlcjFAbG9jYWxob3N0LmNvbTpQYXNzd29yZDEh
 ###
 
 POST {{HotelListing.Api_HostAddress}}/api/countries
