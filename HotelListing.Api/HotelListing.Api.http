@@ -1,9 +1,10 @@
 @HotelListing.Api_HostAddress = https://localhost:7215
 @json = application/json
+@basicAuth = dXNlcjFAbG9jYWxob3N0LmNvbTpQYXNzd29yZDEh
 
 @id=1
 GET {{HotelListing.Api_HostAddress}}/api/countries
-Authorization: Basic dXNlcjFAbG9jYWxob3N0LmNvbTpQYXNzd29yZDEh
+Authorization: Basic {{basicAuth}}
 ###
 
 POST {{HotelListing.Api_HostAddress}}/api/countries
