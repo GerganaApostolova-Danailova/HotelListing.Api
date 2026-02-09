@@ -3,25 +3,27 @@
 @basicAuth = dXNlcjFAbG9jYWxob3N0LmNvbTpQYXNzd29yZDEh
 @apiKey = dXNlcjFAbG9jYWxob3N0LmNvbTpQYXNzd29yZDEh
 @bearerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjYWQwM2ZkNC0zYTY3LTQ4NGQtYjBkNC1mMTYwYjNjODY5MzIiLCJlbWFpbCI6InVzZXIyQGxvY2FsaG9zdC5jb20iLCJqdGkiOiIzNmYyOGQ3My1hZDllLTQ3ZTgtOGM0NC0zYjg5ZGE0N2U2MjAiLCJuYW1lIjoiSm9obiBEb2UiLCJleHAiOjE3NzA2MzUzNTUsImlzcyI6IkhvdGVsTGlzdGluZ0FwaSIsImF1ZCI6IkhvdGVsTGlzdGluZ0FQSUNsaWVudCJ9.-6fxhK8ZUnJC_aIG6-2bNo-rawj1tXkw9IRawu5A33M
-
+@bearerToken2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZGZjNDlkNy1kNjJhLTQ1M2ItOGRjZC1jOTBmMTVkY2NiNTYiLCJlbWFpbCI6InVzZXJAbG9jYWxob3N0LmNvbSIsImp0aSI6ImQyNjQ4NTFlLTFhZjQtNDc0YS1iMGVlLTA3NjIxYjk2OGY2ZiIsIm5hbWUiOiIgIiwiZXhwIjoxNzcwNjQzMDUwLCJpc3MiOiJIb3RlbExpc3RpbmdBcGkiLCJhdWQiOiJIb3RlbExpc3RpbmdBUElDbGllbnQifQ.7ZYDijRVCWK9YghA3MsM6IjylL694Na1lGeoV3J-g20
 @id=1
 GET {{HotelListing.Api_HostAddress}}/api/countries
 #X-Api-Key: {{apiKey}}
 #Authorization: Basic {{basicAuth}}
-#Authorization: Bearer {{bearerToken}}
+Authorization: Bearer {{bearerToken2}}
 ###
 
 POST {{HotelListing.Api_HostAddress}}/api/countries
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2ZWZhMGZiZC1lODg3LTQ4ODktYjI3Ni02Y2QwNGVlNzg2OTgiLCJlbWFpbCI6ImFkbWluMUBsb2NhbGhvc3QuY29tIiwianRpIjoiZWJmMDFiNTEtODZkZC00ODU2LWEzMjgtNjYzNzc2YzYzYzhlIiwibmFtZSI6IkpvaG4gRG9lIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW5pc3RyYXRvciIsImV4cCI6MTc3MDY0MzMzOSwiaXNzIjoiSG90ZWxMaXN0aW5nQXBpIiwiYXVkIjoiSG90ZWxMaXN0aW5nQVBJQ2xpZW50In0.kveqU3gAKSUiLGMvnt5htKFZOsYIbickWwTv5UnHAdA
 Content-Type: {{json}}
 
 {
-  "name": "Test Country",
-  "shortName": "TC"
+  "name": "Test Admin Country",
+  "shortName": "TAC"
 }
 
 ###
 
 DELETE {{HotelListing.Api_HostAddress}}/api/countries/{{id}}
+Authorization: Bearer {{bearerToken2}}
 
 ###
 
@@ -94,21 +96,22 @@ POST {{HotelListing.Api_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "user2@localhost.com",
+  "email": "admin1@localhost.com",
   "password": "Password1!"
 }
 
 ###
 
 POST {{HotelListing.Api_HostAddress}}/api/auth/register
-Authorization: Bearer {{$bearerToken}}
+#Authorization: Bearer {{$bearerToken}}
 Content-Type: application/json
 
 {
-  "email": "user2@localhost.com",
+  "email": "admin1@localhost.com",
   "password": "Password1!",
   "firstName": "John",
-  "lastName": "Doe"
+  "lastName": "Doe",
+  "role": "Administrator"
 }
 
 ###

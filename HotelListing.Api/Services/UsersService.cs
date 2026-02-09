@@ -33,12 +33,15 @@ public class UsersService(UserManager<ApplicationUser> userManager, IConfigurati
             return Result<RegisteredUserDto>.BadRequest(errors);
         }
 
+        await userManager.AddToRoleAsync(user, registerUserDto.Role);
+
         var registeredUser = new RegisteredUserDto
         {
             Id = user.Id,
             Email = user.Email,
             FirstName = user.FirstName,
-            LastName = user.LastName
+            LastName = user.LastName,
+            Role = registerUserDto.Role
         };
         return Result<RegisteredUserDto>.Success(registeredUser);
     }
@@ -81,7 +84,7 @@ public class UsersService(UserManager<ApplicationUser> userManager, IConfigurati
         claims = claims.Union(roleClaims).ToList();
 
         // Set JWT Key credentials
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"]));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Key"] ?? string.Empty));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
         // Create an encoded token
