@@ -33,7 +33,8 @@ public class HotelOrSystemAdminFilter(HotelListingDbContext dbContext) : IAsyncA
             return;
         }
 
-        var userId = httpUser.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;// ?? httpUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = httpUser.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? httpUser.FindFirst
+            (ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrWhiteSpace(userId))
         {

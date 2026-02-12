@@ -2,7 +2,7 @@
 
 public record GetHotelDto(
     int Id,
-    string Name,
+    string CountryName,
     string Address,
     double Rating,
     int CountryId,

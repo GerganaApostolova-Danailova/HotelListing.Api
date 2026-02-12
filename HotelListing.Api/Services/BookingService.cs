@@ -11,7 +11,7 @@ using static HotelListing.Api.Results.Results;
 
 namespace HotelListing.Api.Services;
 
-public class BookingService(HotelListingDbContext context, IUsersService usersService) : IBookingService
+public class BookingService(HotelListingDbContext context, IUsersService usersService,IMapper mapper) : IBookingService
 {
     public async Task<Result<IEnumerable<GetBookingDto>>> GetBookingsForHotelAsync(int hotelId)
     {
@@ -22,20 +22,7 @@ public class BookingService(HotelListingDbContext context, IUsersService usersSe
         var bookings = await context.Bookings
             .Where(b => b.HotelId == hotelId)
             .OrderBy(b => b.CheckIn)
-            .Select(b => new GetBookingDto(
-
-                b.Id,
-                b.HotelId,
-                b.Hotel!.Name,
-                b.CheckIn,
-                b.CheckOut,
-                b.Guests,
-                b.TotalPrice,
-                b.Status.ToString(),
-                b.CreatedAtUtc,
-                b.UpdatedAtUtc
-            ))
-            //.ProjectTo<GetBookingDto>(mapper.ConfigurationProvider)
+            .ProjectTo<GetBookingDto>(mapper.ConfigurationProvider)
             .ToListAsync();
 
         return Result<IEnumerable<GetBookingDto>>.Success(bookings);
@@ -45,29 +32,8 @@ public class BookingService(HotelListingDbContext context, IUsersService usersSe
     {
         var userId = usersService.UserId;
 
-        //var userId = httpContextAccessor?
-        //    .HttpContext?
-        //    .User?
-        //    .FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-
-        if (string.IsNullOrWhiteSpace(userId))
-            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "User is required."));
-
-        var nights = dto.CheckOut.DayNumber - dto.CheckIn.DayNumber;
-
-        if (nights <= 0)
-            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "Check-out date must be after check-in date."));
-
-        if (dto.Guests <= 0)
-            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "Guests must be at least 1."));
-
-        var overlaps = await context.Bookings.AnyAsync(
-                    b => b.HotelId == dto.HotelId
-                    && b.Status != BookingStatus.Cancelled
-                    && dto.CheckIn < b.CheckOut
-                    && dto.CheckOut > b.CheckIn
-                    && b.UserId == userId);
-
+        bool overlaps = await IsOverlap(dto.HotelId, userId, dto.CheckIn, dto.CheckOut);
+        
         if (overlaps)
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Conflict, "The selected dates overlap with an existing booking."));
 
@@ -79,62 +45,26 @@ public class BookingService(HotelListingDbContext context, IUsersService usersSe
         if (hotel is null)
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.NotFound, $"Hotel '{dto.HotelId}' was not found."));
 
-        
-        
+        var nights = dto.CheckOut.DayNumber - dto.CheckIn.DayNumber;
         var totalPrice = hotel.PerNightRate * nights;
+        
+        var booking = mapper.Map<Booking>(dto);
 
-        var booking = new Booking
-        {
-            HotelId = dto.HotelId,
-            UserId = userId,
-            CheckIn = dto.CheckIn,
-            CheckOut = dto.CheckOut,
-            Guests = dto.Guests,
-            TotalPrice = totalPrice,
-            Status = BookingStatus.Pending
-        };
+        booking.UserId = userId;
 
         context.Bookings.Add(booking);
         await context.SaveChangesAsync();
 
-        var created = new GetBookingDto(
-            booking.Id,
-            booking.HotelId,
-            hotel.Name,
-            booking.CheckIn,
-            booking.CheckOut,
-            booking.Guests,
-            totalPrice,
-            BookingStatus.Pending.ToString(),
-            booking.CreatedAtUtc,
-            booking.UpdatedAtUtc
-        );
-        //var result = mapper.Map<GetBookingDto>(booking);
+        var result = mapper.Map<GetBookingDto>(booking);
 
-        return Result<GetBookingDto>.Success(created);
+        return Result<GetBookingDto>.Success(result);
     }
 
     public async Task<Result<GetBookingDto>> UpdateBookingAsync(int hotelId, int bookingId, UpdateBookingDto dto)
     {
         var userId = usersService.UserId;
 
-        if (string.IsNullOrWhiteSpace(userId))
-            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "User is required."));
-
-        var nights = dto.CheckOut.DayNumber - dto.CheckIn.DayNumber;
-
-        if (nights <= 0)
-            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "Check-out date must be after check-in date."));
-
-        if (dto.Guests <= 0)
-            return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "Guests must be at least 1."));
-
-        var overlaps = await context.Bookings.AnyAsync(
-                    b => b.HotelId == hotelId
-                    && b.Status != BookingStatus.Cancelled
-                    && dto.CheckIn < b.CheckOut
-                    && dto.CheckOut > b.CheckIn
-                    && b.UserId == userId);
+        bool overlaps = await IsOverlap(hotelId, userId, dto.CheckIn, dto.CheckOut, bookingId);
 
         if (overlaps)
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Conflict, "The selected dates overlap with an existing booking."));
@@ -152,36 +82,36 @@ public class BookingService(HotelListingDbContext context, IUsersService usersSe
         if (booking.Status == BookingStatus.Cancelled)
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Conflict, $"Cancelled booking cannot be modified"));
 
-        
-
-        //mapper.Map(dto, booking);
+        mapper.Map(dto, booking);
         var perNight = booking.Hotel!.PerNightRate;
-        booking.CheckIn = dto.CheckIn;
-        booking.CheckOut = dto.CheckOut;
-        booking.Guests = dto.Guests;
         booking.TotalPrice = perNight * (dto.CheckOut.DayNumber - dto.CheckIn.DayNumber);
         booking.UpdatedAtUtc = DateTime.UtcNow;
 
         await context.SaveChangesAsync();
 
-        var updated = new GetBookingDto(
-            booking.Id,
-            booking.HotelId,
-            booking.Hotel!.Name,
-            booking.CheckIn,
-            booking.CheckOut,
-            booking.Guests,
-            booking.TotalPrice,
-            booking.Status.ToString(),
-            booking.CreatedAtUtc,
-            booking.UpdatedAtUtc
-        );
-
-        //var updated = mapper.Map<GetBookingDto>(booking);
+        var updated = mapper.Map<GetBookingDto>(booking);
 
         return Result<GetBookingDto>.Success(updated);
     }
 
+    private async Task<bool> IsOverlap(int hotelId, string userId, DateOnly checkIn, DateOnly checkOut, int? bookingId = null)
+    {
+        var query = context.Bookings
+            .Where(
+                    b => b.HotelId == hotelId
+                    && b.Status != BookingStatus.Cancelled
+                    && checkIn < b.CheckOut
+                    && checkOut > b.CheckIn
+                    && b.UserId == userId)
+            .AsQueryable();
+
+        if (bookingId.HasValue)
+        {
+            query = query.Where(q => q.Id != bookingId.Value);
+        }
+
+        return await query.AnyAsync();
+    }
     public async Task<Result> CancelBookingAsync(int hotelId, int bookingId)
     {
         var userId = usersService.UserId;
@@ -277,19 +207,7 @@ public class BookingService(HotelListingDbContext context, IUsersService usersSe
         var bookings = await context.Bookings
             .Where(b => b.HotelId == hotelId && b.UserId == userId)
             .OrderBy(b => b.CheckIn)
-            .Select(b => new GetBookingDto(
-                b.Id,
-                b.HotelId,
-                b.Hotel!.Name,
-                b.CheckIn,
-                b.CheckOut,
-                b.Guests,
-                b.TotalPrice,
-                b.Status.ToString(),
-                b.CreatedAtUtc,
-                b.UpdatedAtUtc
-            ))
-            //.ProjectTo<GetBookingDto>(mapper.ConfigurationProvider)
+            .ProjectTo<GetBookingDto>(mapper.ConfigurationProvider)
             .ToListAsync();
 
         return Result<IEnumerable<GetBookingDto>>.Success(bookings);
