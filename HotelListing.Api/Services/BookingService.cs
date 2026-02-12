@@ -11,7 +11,7 @@ using static HotelListing.Api.Results.Results;
 
 namespace HotelListing.Api.Services;
 
-public class BookingService(HotelListingDbContext context, IHttpContextAccessor httpContextAccessor) : IBookingService
+public class BookingService(HotelListingDbContext context, IUsersService usersService) : IBookingService
 {
     public async Task<Result<IEnumerable<GetBookingDto>>> GetBookingsForHotelAsync(int hotelId)
     {
@@ -43,10 +43,12 @@ public class BookingService(HotelListingDbContext context, IHttpContextAccessor 
 
     public async Task<Result<GetBookingDto>> CreateBookingAsync(CreateBookingDto dto)
     {
-        var userId = httpContextAccessor?
-            .HttpContext?
-            .User?
-            .FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userId = usersService.UserId;
+
+        //var userId = httpContextAccessor?
+        //    .HttpContext?
+        //    .User?
+        //    .FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
         if (string.IsNullOrWhiteSpace(userId))
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "User is required."));
@@ -114,10 +116,7 @@ public class BookingService(HotelListingDbContext context, IHttpContextAccessor 
 
     public async Task<Result<GetBookingDto>> UpdateBookingAsync(int hotelId, int bookingId, UpdateBookingDto dto)
     {
-        var userId = httpContextAccessor?
-            .HttpContext?
-            .User?
-            .FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userId = usersService.UserId;
 
         if (string.IsNullOrWhiteSpace(userId))
             return Result<GetBookingDto>.Failure(new Error(ErrorCodes.Validation, "User is required."));
@@ -185,12 +184,7 @@ public class BookingService(HotelListingDbContext context, IHttpContextAccessor 
 
     public async Task<Result> CancelBookingAsync(int hotelId, int bookingId)
     {
-        //var userId = usersService.UserId;
-
-        var userId = httpContextAccessor?
-            .HttpContext?
-            .User?
-            .FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userId = usersService.UserId;
 
         var booking = await context.Bookings
             .Include(b => b.Hotel)
@@ -214,12 +208,7 @@ public class BookingService(HotelListingDbContext context, IHttpContextAccessor 
 
     public async Task<Result> AdminCancelBookingAsync(int hotelId, int bookingId)
     {
-        //var userId = usersService.UserId;
-
-        var userId = httpContextAccessor?
-            .HttpContext?
-            .User?
-            .FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userId = usersService.UserId;
 
         var isHotelAdminUser = await context.HotelAdmins
             .AnyAsync(ha => ha.HotelId == hotelId && ha.UserId == userId);
@@ -248,12 +237,7 @@ public class BookingService(HotelListingDbContext context, IHttpContextAccessor 
 
     public async Task<Result> AdminConfirmBookingAsync(int hotelId, int bookingId)
     {
-        //var userId = usersService.UserId;
-
-        var userId = httpContextAccessor?
-            .HttpContext?
-            .User?
-            .FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var userId = usersService.UserId;
 
         var isHotelAdminUser = await context.HotelAdmins
             .AnyAsync(ha => ha.UserId == userId && ha.HotelId == hotelId);
@@ -278,5 +262,36 @@ public class BookingService(HotelListingDbContext context, IHttpContextAccessor 
         await context.SaveChangesAsync();
 
         return Result.Success();
+    }
+
+    public async Task<Result<IEnumerable<GetBookingDto>>> GetUserBookingsForHotelAsync(int hotelId)
+    {
+        var userId = usersService.UserId;
+
+        var hotelExists = await context.Hotels.AnyAsync(h => h.Id == hotelId);
+
+        if (!hotelExists)
+            return Result<IEnumerable<GetBookingDto>>.Failure(new Error(ErrorCodes.NotFound, $"Hotel " +
+                $"'{hotelId}' was not found."));
+
+        var bookings = await context.Bookings
+            .Where(b => b.HotelId == hotelId && b.UserId == userId)
+            .OrderBy(b => b.CheckIn)
+            .Select(b => new GetBookingDto(
+                b.Id,
+                b.HotelId,
+                b.Hotel!.Name,
+                b.CheckIn,
+                b.CheckOut,
+                b.Guests,
+                b.TotalPrice,
+                b.Status.ToString(),
+                b.CreatedAtUtc,
+                b.UpdatedAtUtc
+            ))
+            //.ProjectTo<GetBookingDto>(mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return Result<IEnumerable<GetBookingDto>>.Success(bookings);
     }
 }
